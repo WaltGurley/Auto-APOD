@@ -1,102 +1,116 @@
-//load necessary info and run
-$.getJSON("./js/config.json", function(config) {
-  //supply API key from config file
-  var apiKey = config.key;
+//send query to NASA Astronomy Picture of the Day using supplied date
+function loadData(date) {
 
-  //send query to NASA Astronomy Picture of the Day using supplied date
-  function loadData(date) {
-    //compose query usng date and api key, ask for concept tags (metadata)
-    var query = "https://api.nasa.gov/planetary/apod?date=" +  date +
-    "&api_key=" + apiKey;
+  //load necessary info and run
+  $.getJSON("./js/config.json")
+    .done( function(config) {
+      //supply API key from config file, use demo key if no key in config.json
+      var apiKey = config.key || "DEMO_KEY";
+      requestTestAdd(apiKey, date);
+    })
+    .fail( function() {
+      //if load fails fall back on demo key
+      requestTestAdd("DEMO_KEY", date);
+      console.log("Did not load ./js/config.json. Check file.");
+    });
+}
 
-    //http request
-    $.get(query, function(data) {
+//send request, do necessary tests, and add image
+function requestTestAdd(key, date) {
+  //compose query usng date and api key, ask for concept tags (metadata)
+  var query = "https://api.nasa.gov/planetary/apod?date=" +  date +
+  "&api_key=" + key;
 
-      //test if result is not an image (is a video)
-      if (data.media_type != "image") {
+  //http request
+  $.get(query, function(data) {
 
-        //NO VIDEOS?
-        var noVideo = true;
+    //test if result is not an image (is a video)
+    if (data.media_type != "image") {
+      //NO VIDEOS?
+      var noVideo = true;
 
-        //if videos are not wanted reload with random date
-        if (noVideo) {
+      //if videos are not wanted reload with random date
+      if (noVideo) {
+        //load random content between today and supplied past date
+        var pastDate = new Date(2015,0,1);
+        loadData(
+          randomDateFromRange(pastDate, new Date()).toISOString().slice(0,10)
+        );
+
+        console.log("NO VIDEOS!");
+
+      //if videos are wanted, add video
+      } else addVideo(data);
+
+    //if result is an image
+    } else {
+      //create an image element and add a listener to detect image size
+      // before adding it to the window
+      var img = new Image();
+
+      img.addEventListener("load", function() {
+        var imgWidth = this.width;
+        var imgHeight = this.height;
+
+        //if image aspect ratio is square or portrait reload with random date
+        if (imgWidth / imgHeight <= 1) {
 
           //load random content between today and supplied past date
-          var pastDate = new Date(2015,0,1);
           loadData(
-            randomDateFromRange(pastDate, new Date()).toISOString().slice(0,10)
+            randomDateFromRange(new Date(2015,0,1), new Date())
+              .toISOString().slice(0,10)
           );
 
-          console.log("NO VIDEOS!");
+          console.log("NO PORTRAIT ASPECT!");
 
-        //if videos are wanted, add video
-        } else addVideo();
+        } else addImage(data);
+      });
 
-      //if result is an image
-      } else {
+      img.src = data.url;
+      img = null;
+    }
+  });
+}
 
-        //create an image element and add a listener to detect image size
-        // before adding it to the window
-        var img = new Image();
-        img.addEventListener("load", function() {
-          var imgWidth = this.width;
-          var imgHeight = this.height;
+//function to test aspect ratio of image and add to window if landscape
+function addImage(data) {
+  //if content passes all tests
+    var image = $(".main-image");
 
-          //if image aspect ratio is square or portrait reload with random date
-          if (imgWidth / imgHeight <= 1) {
+    image.css("display", "flex")
+      .attr("src", data.url);
 
-            //load random content between today and supplied past date
-            loadData(
-              randomDateFromRange(new Date(2015,0,1), new Date())
-                .toISOString().slice(0,10)
-            );
+    $(".background-blur").css("background-image", "url(" + data.url + ")");
 
-            //TESTING
-            console.log("NO PORTRAIT ASPECT!");
-          } else addImage(data);
-        });
-        img.src = data.url;
-        img = null;
-      }
-    });
-  }
+    $(".main-video").css("display", "none");
 
-  //function to test aspect ratio of image and add to window if landscape
-  function addImage(data) {
-    //if content passes all tests
-      var image = $(".main-image");
+    $(".image-title").text(data.title);
+}
 
-      image.css("display", "flex")
-        .attr("src", data.url);
+//function to load a random date if current date content is not an image
+// supply two date objects for the range
+function randomDateFromRange(olderDate, newerDate) {
+  var max = newerDate.getTime();
+  var min = olderDate.getTime();
 
-      $(".background-blur").css("background-image", "url(" + data.url + ")");
+  var randomDate = Math.random() * (max - min) + min;
 
-      $(".main-video").css("display", "none");
+  return new Date(randomDate);
+}
 
-      $(".image-title").text(data.title);
-  }
-
-  //function to load a random date if current date content is not an image
-  // supply two date objects for the range
-  function randomDateFromRange(olderDate, newerDate) {
-    var max = newerDate.getTime();
-    var min = olderDate.getTime();
-
-    var randomDate = Math.random() * (max - min) + min;
-
-    return new Date(randomDate);
-  }
-
-  //function to load video content if wanted
-  function addVideo() {
+//function to load video content if wanted
+function addVideo(data) {
+  //test if iframe for video is already appended to body
+  if ($("iframe").length === 0) {
     $(".main-content").append("<iframe class='main-video'></iframe>");
-    $(".main-image").css("display", "none");
-
-    $(".main-video")
-      .css("display", "flex")
-      .attr("src", data.url + "&autoplay=1&VQ=1080");
   }
 
-  //initial load of media using the current day
-  loadData((new Date()).toISOString().slice(0,10));
-});
+  $(".main-image").css("display", "none");
+
+  $(".main-video")
+    .css("display", "flex")
+    .attr("src", data.url + "&autoplay=1&VQ=1080");
+}
+
+//initial load of media using the current day
+loadData((new Date()).toISOString().slice(0,10));
