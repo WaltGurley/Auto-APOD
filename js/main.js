@@ -27,7 +27,7 @@ function requestTestAdd(key, date) {
     //test if result is not an image (is a video)
     if (data.media_type != "image") {
       //NO VIDEOS?
-      var noVideo = true;
+      var noVideo = false;
 
       //if videos are not wanted reload with random date
       if (noVideo) {
@@ -113,4 +113,8 @@ function addVideo(data) {
 }
 
 //initial load of media using the current day
-loadData((new Date()).toISOString().slice(0,10));
+//load random content between today and supplied past date
+loadData(
+  randomDateFromRange(new Date(2014,0,1), new Date())
+    .toISOString().slice(0,10)
+);

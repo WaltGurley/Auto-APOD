@@ -48,22 +48,3 @@ body {
   margin-top: 0.4vmax;
   margin-bottom: 0.4vmax;
 }
-
-.date-changer {
-  position: absolute;
-  top: 1vmin;
-  left: 1vmin;
-  width: 30%;
-}
-
-.date-picker-input {
-  height: 2vmax;
-  font-size: 1vmax;
-  width: 50%;
-}
-
-.date-picker-btn {
-  height: 2vmax;
-  font-size: 1vmax;
-  width: 10%;
-}
