@@ -69,6 +69,14 @@ function requestTestAdd(key, date) {
       img.src = data.url;
       img = null;
     }
+  })
+  .fail( function() {
+    $(".background-blur")
+      .css({
+        "background-image": "url(http://placekitten.com/g/1920/1080)",
+        "-webkit-filter": "blur(0)"
+      });
+    $(".image-title").text("Sytem Overload :( THIS IS NOT AN ASTRO PIC!");
   });
 }
 
