@@ -1,0 +1,60 @@
+body {
+  overflow: hidden;
+  background-color: #000;
+}
+
+.background-blur {
+  position: fixed;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: none;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  -webkit-filter: blur(20px);
+  z-index: -1;
+}
+
+.main-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vmin;
+  width: auto;
+}
+
+.main-image {
+  flex: 0 0 auto;
+  height: inherit;
+  display: none;
+}
+
+.main-video {
+  flex: 1 1 auto;
+  height: inherit;
+  display: none;
+}
+
+.title {
+  position: absolute;
+  bottom: 1vmin;
+  left: 1vmin;
+}
+
+.title h2 {
+  font-size: 2vmax;
+  color: #fff;
+}
+
+.date-changer {
+  position: absolute;
+  top: 1vmin;
+  left: 1vmin;
+  width: 25%;
+}
+
+.sizing {
+  height: 2vmax;
+  font-size: 1vmax
+}
