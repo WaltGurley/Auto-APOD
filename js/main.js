@@ -11,15 +11,16 @@ function loadData(date) {
     .fail( function() {
       //if load fails fall back on demo key
       requestTestAdd("DEMO_KEY", date);
-      console.log("Did not load ./js/config.json. Check file.");
+      console.log("Did not load ./js/config.json. Check file. Used DEMO_KEY");
     });
 }
 
 //send request, do necessary tests, and add image
 function requestTestAdd(key, date) {
-  //compose query usng date and api key, ask for concept tags (metadata)
+  //compose query usng date and api key, ask for concept tags and hd image
   var query = "https://api.nasa.gov/planetary/apod?date=" +  date +
-  "&api_key=" + key;
+  "&hd=True&concept_tags=True&api_key=" + key;
+
 
   //http request
   $.get(query, function(data) {
@@ -76,7 +77,9 @@ function requestTestAdd(key, date) {
         "background-image": "url(http://placekitten.com/g/1920/1080)",
         "-webkit-filter": "blur(0)"
       });
-    $(".image-title").text("Sytem Overload :( THIS IS NOT AN ASTRO PIC!");
+    $(".fail-to-load").css("display", "flex");
+
+    console.log("Failed to load APOD");
   });
 }
 
