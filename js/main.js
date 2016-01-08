@@ -4,9 +4,12 @@ function loadData(date) {
   //load necessary info and run
   $.getJSON("./js/config.json")
     .done( function(config) {
-      //supply API key from config file, use demo key if no key in config.json
-      var apiKey = config.key || "DEMO_KEY";
-      requestTestAdd(apiKey, date);
+      //supply API keys from config file,
+      // use demo key if no NASA API key in config.json
+      var apiKeys = {}
+      apiKeys.nasa = config.keyNASA || "DEMO_KEY";
+      apiKeys.short = config.keyUrlShortener || undefined;
+      requestTestAdd(apiKeys, date);
     })
     .fail( function() {
       //if load fails fall back on demo key
@@ -16,14 +19,17 @@ function loadData(date) {
 }
 
 //send request, do necessary tests, and add image
-function requestTestAdd(key, date) {
-  //compose query usng date and api key, ask for concept tags (metadata)
+function requestTestAdd(keys, date) {
+  //compose query usng date and api key, ask for concept tags and hd image
   var query = "https://api.nasa.gov/planetary/apod?date=" +  date +
-  "&api_key=" + key;
+    "&hd=True&api_key=" + keys.nasa;
+
 
   //http request
   $.get(query, function(data) {
-
+    //append API key for url shortener to data for easy passing around
+    data.shortKey = keys.short;
+    console.log(data);
     //test if result is not an image (is a video)
     if (data.media_type != "image") {
       //NO VIDEOS?
@@ -66,25 +72,34 @@ function requestTestAdd(key, date) {
         } else addImage(data);
       });
 
-      img.src = data.url;
+      //set the image source for testing the image size on load
+      img.src = data.hdurl || data.url;
       img = null;
     }
   });
 }
 
-//function to test aspect ratio of image and add to window if landscape
+//function to window add image to window if landscape
 function addImage(data) {
+  var imageurl = data.hdurl || data.url;
+  var copyright = data.copyright || undefined;
   //if content passes all tests
     var image = $(".main-image");
 
     image.css("display", "flex")
-      .attr("src", data.url);
+      .attr("src", imageurl);
 
-    $(".background-blur").css("background-image", "url(" + data.url + ")");
+    $(".background-blur").css("background-image", "url(" + imageurl + ")");
 
     $(".main-video").css("display", "none");
 
     $(".image-title").text(data.title);
+    if (copyright) {
+      $(".image-copy").text(String.fromCharCode(169) + " " + data.copyright);
+    } else $(".image-copy").remove();
+    if (data.shortKey) {
+      $(".image-expl").text("url shortener");
+    } else $(".image-expl").text("apod.nasa.gov");
 }
 
 //function to load a random date if current date content is not an image
