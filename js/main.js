@@ -6,14 +6,17 @@ function loadData(date) {
     .done( function(config) {
       //supply API keys from config file,
       // use demo key if no NASA API key in config.json
-      var apiKeys = {}
+      var apiKeys = {};
       apiKeys.nasa = config.keyNASA || "DEMO_KEY";
       apiKeys.short = config.keyUrlShortener || undefined;
       requestTestAdd(apiKeys, date);
     })
     .fail( function() {
       //if load fails fall back on demo key
-      requestTestAdd("DEMO_KEY", date);
+      var apiKeys = {};
+      apiKeys.nasa = "DEMO_KEY";
+      apiKeys.short = undefined;
+      requestTestAdd(apiKeys, date);
       console.log("Did not load ./js/config.json. Check file.");
     });
 }
@@ -29,7 +32,6 @@ function requestTestAdd(keys, date) {
   $.get(query, function(data) {
     //append API key for url shortener to data for easy passing around
     data.shortKey = keys.short;
-    console.log(data);
     //test if result is not an image (is a video)
     if (data.media_type != "image") {
       //NO VIDEOS?
@@ -39,7 +41,8 @@ function requestTestAdd(keys, date) {
       if (noVideo) {
         //load random content between today and supplied past date
         var pastDate = new Date(2015,0,1);
-        loadData(
+        requestTestAdd(
+          keys,
           randomDateFromRange(pastDate, new Date()).toISOString().slice(0,10)
         );
 
@@ -62,7 +65,8 @@ function requestTestAdd(keys, date) {
         if (imgWidth / imgHeight <= 1) {
 
           //load random content between today and supplied past date
-          loadData(
+          requestTestAdd(
+            keys,
             randomDateFromRange(new Date(2015,0,1), new Date())
               .toISOString().slice(0,10)
           );
@@ -95,11 +99,34 @@ function addImage(data) {
 
     $(".image-title").text(data.title);
     if (copyright) {
+      $(".image-copy").css("display", "block");
       $(".image-copy").text(String.fromCharCode(169) + " " + data.copyright);
-    } else $(".image-copy").remove();
+    } else $(".image-copy").css("display", "none");
     if (data.shortKey) {
-      $(".image-expl").text("url shortener");
-    } else $(".image-expl").text("apod.nasa.gov");
+      var dateFormat = data.date.replace(/-/g,"").replace(/\d\d/,"");
+      shortenUrl(data.shortKey, dateFormat);
+    } else $(".image-expl").text("apod.nasa.gov/apod/ap");
+}
+
+function shortenUrl(key, dateFormat) {
+  var apiKey = key;
+
+  function init() {
+    gapi.client.setApiKey(apiKey);
+    gapi.client.load("urlshortener", "v1").then(makeRequest);
+  }
+  init();
+
+  function makeRequest() {
+    var request = gapi.client.urlshortener.url.insert({
+      "longUrl": "http://apod.nasa.gov/apod/ap" + dateFormat + ".html"
+    });
+    request.then(function(response) {
+      $(".image-expl").text("Explanation: " + response.result.id);
+    }, function(reason) {
+      console.log("Error: " + reason.result.error.message);
+    });
+  }
 }
 
 //function to load a random date if current date content is not an image
