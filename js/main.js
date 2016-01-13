@@ -58,18 +58,19 @@ function requestTestAdd(keys, date) {
       }
     })
     .fail(function(response) {
-      //if request fails due to bad API key
-      if (response.responseJSON.error.code === "API_KEY_INVALID") {
-        //if request fails try to fall back on NASA API DEMO_KEY
-        if (keys.nasa != "DEMO_KEY") {
-          console.log(
-            response.responseJSON.error.message +
-            "... Trying again with DEMO_KEY"
-          );
-          keys.nasa = "DEMO_KEY";
-          requestTestAdd(keys, date);
-        } else console.log(response.responseJSON.error.message);
-      } else console.log(response.responseJSON.error.message);
+      var extraMessage = "";
+      //if request fails due to bad API key and "DEMO_KEY" hasn't been used
+      if (
+        response.responseJSON.error.code === "API_KEY_INVALID" &&
+        keys.nasa != "DEMO_KEY"
+      ) {
+        extraMessage = "... Trying again with DEMO_KEY";
+        keys.nasa = "DEMO_KEY";
+        requestTestAdd(keys, date);
+      }
+
+      console.log(response.responseJSON.error.message + extraMessage);
+
     });
 }
 
