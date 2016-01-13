@@ -54,21 +54,28 @@ function requestTestAdd(keys, date) {
 
       //if result is an image
       } else {
-        testImageSize(data);
+        testImageSize(keys, data);
       }
     })
-    .fail(function() {
-      //if get fails fall back on NASA API DEMO_KEY
-      console.log("Bad NASA query. Falling back to DEMO_KEY.");
-
-      keys.nasa = "DEMO_KEY";
-      requestTestAdd(keys, date);
+    .fail(function(response) {
+      //if request fails due to bad API key
+      if (response.responseJSON.error.code === "API_KEY_INVALID") {
+        //if request fails try to fall back on NASA API DEMO_KEY
+        if (keys.nasa != "DEMO_KEY") {
+          console.log(
+            response.responseJSON.error.message +
+            "... Trying again with DEMO_KEY"
+          );
+          keys.nasa = "DEMO_KEY";
+          requestTestAdd(keys, date);
+        } else console.log(response.responseJSON.error.message);
+      } else console.log(response.responseJSON.error.message);
     });
 }
 
 //function to get the dimensions of the image for testing aspect
 // (i.e., landscape versus portrait)
-function testImageSize(data) {
+function testImageSize(keys, data) {
   //create an image element and add a listener to detect image size
   // before adding it to the window
   var img = new Image();
