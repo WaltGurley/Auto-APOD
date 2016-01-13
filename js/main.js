@@ -29,103 +29,133 @@ function requestTestAdd(keys, date) {
 
 
   //http request
-  $.get(query, function(data) {
-    //append API key for url shortener to data for easy passing around
-    data.shortKey = keys.short;
-    //test if result is not an image (is a video)
-    if (data.media_type != "image") {
-      //NO VIDEOS?
-      var noVideo = true;
+  $.get(query)
+    .done(function(data) {
+      //append API key for url shortener to data for easy passing around
+      data.shortKey = keys.short;
+      //test if result is not an image (is a video)
+      if (data.media_type != "image") {
+        //NO VIDEOS?
+        var noVideo = true;
 
-      //if videos are not wanted reload with random date
-      if (noVideo) {
-        //load random content between today and supplied past date
-        var pastDate = new Date(2015,0,1);
-        requestTestAdd(
-          keys,
-          randomDateFromRange(pastDate, new Date()).toISOString().slice(0,10)
-        );
-
-        console.log("NO VIDEOS!");
-
-      //if videos are wanted, add video
-      } else addVideo(data);
-
-    //if result is an image
-    } else {
-      //create an image element and add a listener to detect image size
-      // before adding it to the window
-      var img = new Image();
-
-      img.addEventListener("load", function() {
-        var imgWidth = this.width;
-        var imgHeight = this.height;
-
-        //if image aspect ratio is square or portrait reload with random date
-        if (imgWidth / imgHeight <= 1) {
-
+        //if videos are not wanted reload with random date
+        if (noVideo) {
           //load random content between today and supplied past date
+          var pastDate = new Date(2015,0,1);
           requestTestAdd(
             keys,
-            randomDateFromRange(new Date(2015,0,1), new Date())
-              .toISOString().slice(0,10)
+            randomDateFromRange(pastDate, new Date()).toISOString().slice(0,10)
           );
 
-          console.log("NO PORTRAIT ASPECT!");
+          console.log("NO VIDEOS!");
 
-        } else addImage(data);
-      });
+        //if videos are wanted, add video
+        } else addVideo(data);
 
-      //set the image source for testing the image size on load
-      img.src = data.hdurl || data.url;
-      img = null;
-    }
+      //if result is an image
+      } else {
+        testImageSize(data);
+      }
+    })
+    .fail(function() {
+      //if get fails fall back on NASA API DEMO_KEY
+      console.log("Bad NASA query. Falling back to DEMO_KEY.");
+
+      keys.nasa = "DEMO_KEY";
+      requestTestAdd(keys, date);
+    });
+}
+
+//function to get the dimensions of the image for testing aspect
+// (i.e., landscape versus portrait)
+function testImageSize(data) {
+  //create an image element and add a listener to detect image size
+  // before adding it to the window
+  var img = new Image();
+
+  img.addEventListener("load", function() {
+    var imgWidth = this.width;
+    var imgHeight = this.height;
+
+    //if image aspect ratio is square or portrait reload with random date
+    if (imgWidth / imgHeight <= 1) {
+
+      //load random content between today and supplied past date
+      requestTestAdd(
+        keys,
+        randomDateFromRange(new Date(2015,0,1), new Date())
+          .toISOString().slice(0,10)
+      );
+
+      console.log("NO PORTRAIT ASPECT!");
+
+    } else addImage(data);
   });
+
+  //set the image source for testing the image size on load
+  img.src = data.hdurl || data.url;
+  img = null;
 }
 
 //function to window add image to window if landscape
 function addImage(data) {
-  var imageurl = data.hdurl || data.url;
+  var imageUrl = data.hdurl || data.url;
   var copyright = data.copyright || undefined;
-  //if content passes all tests
+  //content passed all tests
     var image = $(".main-image");
 
     image.css("display", "flex")
-      .attr("src", imageurl);
+      .attr("src", imageUrl);
 
-    $(".background-blur").css("background-image", "url(" + imageurl + ")");
+    $(".background-blur").css("background-image", "url(" + imageUrl + ")");
 
     $(".main-video").css("display", "none");
 
     $(".image-title").text(data.title);
+
+    //if image has copyright info add it to display
+    // else remove text from screen
     if (copyright) {
       $(".image-copy").css("display", "block");
       $(".image-copy").text(String.fromCharCode(169) + " " + data.copyright);
     } else $(".image-copy").css("display", "none");
+
+    //if urlshortener API key provided create short url
+    // else provide link to main landing page of APOD
     if (data.shortKey) {
       var dateFormat = data.date.replace(/-/g,"").replace(/\d\d/,"");
       shortenUrl(data.shortKey, dateFormat);
     } else $(".image-expl").text("apod.nasa.gov/apod/ap");
 }
 
+//function to setup the short url for linking to the image's page on the
+// APOD website, supply Google API key and the formatted date
 function shortenUrl(key, dateFormat) {
-  var apiKey = key;
 
+  //function to load the Google url shortener API
   function init() {
-    gapi.client.setApiKey(apiKey);
-    gapi.client.load("urlshortener", "v1").then(makeRequest);
+    gapi.client.setApiKey(key);
+    gapi.client.load("urlshortener", "v1")
+      .then(makeRequest);
   }
   init();
 
+  //function to request a shortened version of the url to the image on the
+  // APOD website
   function makeRequest() {
-    var request = gapi.client.urlshortener.url.insert({
-      "longUrl": "http://apod.nasa.gov/apod/ap" + dateFormat + ".html"
-    });
-    request.then(function(response) {
-      $(".image-expl").text("Explanation: " + response.result.id);
-    }, function(reason) {
-      console.log("Error: " + reason.result.error.message);
-    });
+    //if urlshortener loaded correctly then shorten url
+    // else supply link to main landing page
+    if (gapi.client.urlshortener) {
+      var request = gapi.client.urlshortener.url.insert({
+        "longUrl": "http://apod.nasa.gov/apod/ap" + dateFormat + ".html"
+      });
+      request.then(function(response) {
+        $(".image-expl").text("Explanation: " + response.result.id);
+      }, function(reason) {
+        console.log("Error: " + reason.result.error.message);
+        $(".image-expl").text("apod.nasa.gov/apod/ap");
+      });
+    } else $(".image-expl").text("apod.nasa.gov/apod/ap");
   }
 }
 
