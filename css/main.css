@@ -5,6 +5,16 @@ body {
   font-family: "Helvetica", sans-serif;
 }
 
+a {
+  text-decoration: none;
+  color: #fff;
+}
+
+a:hover {
+  text-decoration: none;
+  color: #f429f9;
+}
+
 .background-blur {
   position: fixed;
   left: 0;
@@ -15,27 +25,8 @@ body {
   background-size: cover;
   background-position: center;
   -webkit-filter: blur(20px);
+  filter: blur(20px);
   z-index: -1;
-}
-
-@media (orientation: landscape) {
-  .main-content {
-    width: auto;
-  }
-
-  .main-image, .main-video {
-    height: 100%;
-  }
-}
-
-@media (orientation: portrait) {
-  .main-content {
-    width: 100vw;
-  }
-
-  .main-image, .main-video {
-    width: 100%;
-  }
 }
 
 .main-content {

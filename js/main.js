@@ -27,7 +27,6 @@ function requestTestAdd(keys, date) {
   var query = "https://api.nasa.gov/planetary/apod?date=" +  date +
     "&hd=True&api_key=" + keys.nasa;
 
-
   //http request
   $.get(query)
     .done(function(data) {
@@ -95,9 +94,24 @@ function testImageSize(keys, data) {
           .toISOString().slice(0,10)
       );
 
-      console.log("NO PORTRAIT ASPECT!");
+      console.log("NO PORTRAIT ASPECT IMAGES!");
 
-    } else addImage(data);
+    } else {
+
+      //if matchMedia API available create media query based on aspect of image
+      if (matchMedia) {
+        //create media query that tests if the aspect of the window is greater
+        // than or equal to the native aspect of the image and add an event
+        // listener that is fired when this changes
+        var mediaQuery = window.matchMedia(
+          "(min-aspect-ratio:" + imgWidth + "/" +
+          imgHeight + ")");
+        mediaQuery.addListener(aspectChange);
+        aspectChange(mediaQuery);
+      }
+
+      addImage(data);
+    }
   });
 
   //set the image source for testing the image size on load
@@ -136,6 +150,25 @@ function addImage(data) {
     } else $(".image-expl").text("apod.nasa.gov/apod/ap");
 }
 
+//function that handles image sizing to fit any aspect screen
+function aspectChange(mediaQuery) {
+  //if the aspect of the screen is greater than the aspect of the image
+  if (mediaQuery.matches) {
+    $(".main-content").css("width", "auto");
+    $(".main-image").css({
+      "width": "",
+      "height": "100%"
+    });
+  //if the aspect of the screen is less than the aspect of the image
+  } else {
+    $(".main-content").css("width", "100vw");
+    $(".main-image").css({
+      "width": "100%",
+      "height": ""
+    });
+  }
+}
+
 //function to setup the short url for linking to the image's page on the
 // APOD website, supply Google API key and the formatted date
 function shortenUrl(key, dateFormat) {
@@ -159,11 +192,16 @@ function shortenUrl(key, dateFormat) {
       });
       request.then(function(response) {
         $(".image-expl").text("Explanation: " + response.result.id);
+        $(".image-expl").wrap("<a href='" + response.result.id + "' target='_blank'></a>");
       }, function(reason) {
         console.log("Error: " + reason.result.error.message);
-        $(".image-expl").text("apod.nasa.gov/apod/ap");
+        $(".image-expl").text("apod.nasa.gov/apod");
+        $(".image-expl").wrap("<a href='http://apod.nasa.gov/apod/' target='_blank'></a>");
       });
-    } else $(".image-expl").text("apod.nasa.gov/apod/ap");
+    } else {
+      $(".image-expl").text("apod.nasa.gov/apod");
+      $(".image-expl").wrap("<a href='http://apod.nasa.gov/apod/' target='_blank'></a>");
+    }
   }
 }
 
