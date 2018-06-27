@@ -97,19 +97,6 @@ function testImageSize(keys, data) {
       console.log("NO PORTRAIT ASPECT IMAGES!");
 
     } else {
-
-      //if matchMedia API available create media query based on aspect of image
-      if (matchMedia) {
-        //create media query that tests if the aspect of the window is greater
-        // than or equal to the native aspect of the image and add an event
-        // listener that is fired when this changes
-        var mediaQuery = window.matchMedia(
-          "(min-aspect-ratio:" + imgWidth + "/" +
-          imgHeight + ")");
-        mediaQuery.addListener(aspectChange);
-        aspectChange(mediaQuery);
-      }
-
       addImage(data);
     }
   });
@@ -148,25 +135,6 @@ function addImage(data) {
       var dateFormat = data.date.replace(/-/g,"").replace(/\d\d/,"");
       shortenUrl(data.shortKey, dateFormat);
     } else $(".image-expl").text("apod.nasa.gov/apod/ap");
-}
-
-//function that handles image sizing to fit any aspect screen
-function aspectChange(mediaQuery) {
-  //if the aspect of the screen is greater than the aspect of the image
-  if (mediaQuery.matches) {
-    $(".main-content").css("width", "auto");
-    $(".main-image").css({
-      "width": "",
-      "height": "100%"
-    });
-  //if the aspect of the screen is less than the aspect of the image
-  } else {
-    $(".main-content").css("width", "100vw");
-    $(".main-image").css({
-      "width": "100%",
-      "height": ""
-    });
-  }
 }
 
 //function to setup the short url for linking to the image's page on the
