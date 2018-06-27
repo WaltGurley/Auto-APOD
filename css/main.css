@@ -67,21 +67,13 @@ a:hover {
   display: none;
 }
 
-.date-changer {
-  position: absolute;
-  top: 0.5em;
-  left: 0.5em;
-  width: 30%;
-}
-
-.date-picker-input {
-  height: 2vmax;
-  font-size: 1vmax;
-  width: 50%;
-}
-
-.date-picker-btn {
-  height: 2vmax;
-  font-size: 1vmax;
-  width: 10%;
+.fail-to-load {
+  flex: 0 1 auto;
+  flex-direction: column;
+  text-align: center;
+  background-color: rgb(0, 0, 0);
+  background-color: rgba(0, 0, 0, 0.3);
+  font-size: 1.5vmax;
+  color: #fff;
+  display: none;
 }

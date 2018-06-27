@@ -57,6 +57,13 @@ function requestTestAdd(keys, date) {
       }
     })
     .fail(function(response) {
+      $(".background-blur")
+        .css({
+          "background-image": "url(http://placekitten.com/g/1920/1080)",
+          "-webkit-filter": "blur(0)"
+        });
+      $(".fail-to-load").css("display", "flex");
+
       var extraMessage = "";
       //if request fails due to bad API key and "DEMO_KEY" hasn't been used
       if (
@@ -97,6 +104,19 @@ function testImageSize(keys, data) {
       console.log("NO PORTRAIT ASPECT IMAGES!");
 
     } else {
+
+      //if matchMedia API available create media query based on aspect of image
+      if (matchMedia) {
+        //create media query that tests if the aspect of the window is greater
+        // than or equal to the native aspect of the image and add an event
+        // listener that is fired when this changes
+        var mediaQuery = window.matchMedia(
+          "(min-aspect-ratio:" + imgWidth + "/" +
+          imgHeight + ")");
+        mediaQuery.addListener(aspectChange);
+        aspectChange(mediaQuery);
+      }
+
       addImage(data);
     }
   });
@@ -130,11 +150,36 @@ function addImage(data) {
     } else $(".image-copy").css("display", "none");
 
     //if urlshortener API key provided create short url
-    // else provide link to main landing page of APOD
+    // else provide long url to page
+    var dateFormat = data.date.replace(/-/g,"").replace(/\d\d/,"");
     if (data.shortKey) {
-      var dateFormat = data.date.replace(/-/g,"").replace(/\d\d/,"");
       shortenUrl(data.shortKey, dateFormat);
-    } else $(".image-expl").text("apod.nasa.gov/apod/ap");
+    } else {
+      $(".image-expl").text("Explanation: apod.nasa.gov");
+      $(".image-expl").wrap(
+        "<a href='http://apod.nasa.gov/apod/ap" +
+        dateFormat + ".html' target='_blank'></a>"
+      );
+    }
+}
+
+//function that handles image sizing to fit any aspect screen
+function aspectChange(mediaQuery) {
+  //if the aspect of the screen is greater than the aspect of the image
+  if (mediaQuery.matches) {
+    $(".main-content").css("width", "auto");
+    $(".main-image").css({
+      "width": "",
+      "height": "100%"
+    });
+  //if the aspect of the screen is less than the aspect of the image
+  } else {
+    $(".main-content").css("width", "100vw");
+    $(".main-image").css({
+      "width": "100%",
+      "height": ""
+    });
+  }
 }
 
 //function to setup the short url for linking to the image's page on the
@@ -198,5 +243,5 @@ function addVideo(data) {
     .attr("src", data.url + "&autoplay=1&VQ=1080");
 }
 
-//initial load of media using the current day
-loadData((new Date()).toISOString().slice(0,10));
+//initial load of media using dandom day
+loadData(randomDateFromRange(new Date(2015,0,1), new Date()).toISOString().slice(0,10));
